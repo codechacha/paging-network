@@ -20,6 +20,7 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
+import androidx.paging.PagedList
 import com.jsandroid.paging.data.GithubRepository
 import com.jsandroid.paging.model.Repo
 import com.jsandroid.paging.model.RepoSearchResult
@@ -42,7 +43,7 @@ class SearchRepositoriesViewModel(application: Application) : AndroidViewModel(a
         repository.search(it)
     })
 
-    val repos: LiveData<List<Repo>> = Transformations.switchMap(repoResult,
+    val repos: LiveData<PagedList<Repo>> = Transformations.switchMap(repoResult,
             { it -> it.data })
     val networkErrors: LiveData<String> = Transformations.switchMap(repoResult,
             { it -> it.networkErrors })
@@ -52,15 +53,6 @@ class SearchRepositoriesViewModel(application: Application) : AndroidViewModel(a
      */
     fun searchRepo(queryString: String) {
         queryLiveData.postValue(queryString)
-    }
-
-    fun listScrolled(visibleItemCount: Int, lastVisibleItemPosition: Int, totalItemCount: Int) {
-        if (visibleItemCount + lastVisibleItemPosition + VISIBLE_THRESHOLD >= totalItemCount) {
-            val immutableQuery = lastQueryValue()
-            if (immutableQuery != null) {
-                repository.requestMore(immutableQuery)
-            }
-        }
     }
 
     /**
