@@ -19,12 +19,15 @@ package com.jsandroid.paging.data
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.paging.LivePagedListBuilder
+import androidx.paging.PagedList
 import com.jsandroid.paging.model.RepoSearchResult
 import com.jsandroid.paging.api.GithubService
 import com.jsandroid.paging.api.searchRepos
-import com.jsandroid.paging.db.GithubLocalCache
-import com.jsandroid.paging.db.RepoDatabase
+import com.jsandroid.paging.datasource.RepoDataFactory
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 /**
  * Repository class that works with local and remote data sources.
@@ -32,7 +35,8 @@ import com.jsandroid.paging.db.RepoDatabase
 class GithubRepository(context: Context) {
 
     private val service: GithubService = GithubService.create()
-    private val cache: GithubLocalCache = GithubLocalCache(context)
+//    private val cache: GithubLocalCache = GithubLocalCache(context)
+    private val executor: Executor = Executors.newFixedThreadPool(5)
 
     /**
      * Search repositories whose names match the query.
@@ -40,24 +44,25 @@ class GithubRepository(context: Context) {
     fun search(query: String): RepoSearchResult {
         Log.d("GithubRepository", "New query: $query")
 
-        // Get data source factory from the local cache
-        val dataSourceFactory = cache.reposByName(query)
 
-        // Construct the boundary callback
-        val boundaryCallback = RepoBoundaryCallback(query, service, cache)
-        val networkErrors = boundaryCallback.networkErrors
+        val dataSourceFactory = RepoDataFactory(query, service)
 
-        // Get the paged list
-        val data = LivePagedListBuilder(dataSourceFactory, DATABASE_PAGE_SIZE)
-            .setBoundaryCallback(boundaryCallback)
+        val pagedListConfig = PagedList.Config.Builder()
+            .setPageSize(50)
+            .setInitialLoadSizeHint(50) // default: page size * 3
+            .setPrefetchDistance(10) // default: page size
+            .setEnablePlaceholders(false) // default: true
             .build()
 
-        // Get the network errors exposed by the boundary callback
+        val data = LivePagedListBuilder(dataSourceFactory, pagedListConfig)
+            .setFetchExecutor(executor)
+            .build()
+
+        val networkErrors = Transformations.switchMap(dataSourceFactory.mutableLiveData,
+                { dataSource -> dataSource.networkErrors })
+
         return RepoSearchResult(data, networkErrors)
 
     }
 
-    companion object {
-        private const val DATABASE_PAGE_SIZE = 20
-    }
 }

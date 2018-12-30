@@ -2,6 +2,7 @@ package com.jsandroid.paging
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -53,7 +54,6 @@ class MainActivity : AppCompatActivity() {
     private fun initAdapter() {
         list.adapter = adapter
         viewModel.repos.observe(this, Observer<PagedList<Repo>> {
-            showEmptyList(it?.size == 0)
             adapter.submitList(it)
         })
         viewModel.networkErrors.observe(this, Observer<String> {
@@ -89,16 +89,6 @@ class MainActivity : AppCompatActivity() {
                 viewModel.searchRepo(it.toString())
                 adapter.submitList(null)
             }
-        }
-    }
-
-    private fun showEmptyList(show: Boolean) {
-        if (show) {
-            emptyList.visibility = View.VISIBLE
-            list.visibility = View.GONE
-        } else {
-            emptyList.visibility = View.GONE
-            list.visibility = View.VISIBLE
         }
     }
 }

@@ -32,10 +32,6 @@ import com.jsandroid.paging.model.RepoSearchResult
  */
 class SearchRepositoriesViewModel(application: Application) : AndroidViewModel(application) {
 
-    companion object {
-        private const val VISIBLE_THRESHOLD = 5
-    }
-
     private val repository: GithubRepository = GithubRepository(application)
 
     private val queryLiveData = MutableLiveData<String>()
