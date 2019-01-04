@@ -35,7 +35,6 @@ import java.util.concurrent.Executors
 class GithubRepository(context: Context) {
 
     private val service: GithubService = GithubService.create()
-//    private val cache: GithubLocalCache = GithubLocalCache(context)
     private val executor: Executor = Executors.newFixedThreadPool(5)
 
     /**
